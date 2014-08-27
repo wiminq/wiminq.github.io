@@ -9,8 +9,7 @@
   <meta name="author" content="Qin Chenbo">
 
   
-  <meta name="description" content="
-">
+  <meta name="description" content="Octopress 搭建过程 git clone git://github.com/imathis/octopress.git octopress cd octopress gem install bundler rbenv rehash bundle install rake install &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -72,6 +71,81 @@
       
   <header>
     
+      <h1 class="entry-title"><a href="/blog/2014/08/27/octopress-da-jian-guo-cheng/">Octopress 搭建过程</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-08-27T10:43:57+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:43 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>Octopress 搭建过程</h1>
+
+<p>git clone git://github.com/imathis/octopress.git octopress</p>
+
+<p>cd octopress</p>
+
+<p>gem install bundler</p>
+
+<p>rbenv rehash</p>
+
+<p>bundle install</p>
+
+<p>rake install</p>
+
+<p>rake setup_github_pages</p>
+
+<pre><code>git@github.com:wiminq/wiminq.github.io.git
+</code></pre>
+
+<p>rake generate</p>
+
+<p>rake deploy</p>
+
+<p>git add .
+git commit -m &lsquo;test&rsquo;
+git push origin source</p>
+
+<p>echo &lsquo;www.qcbetter.com&rsquo; >> source/CNAME</p>
+
+<p>alias rake=&lsquo;noglob rake&rsquo;</p>
+
+<p>rake new_post[&ldquo;first &rdquo;]</p>
+
+<pre><code>vim source/_posts/2014-08-27-test.markdown
+</code></pre>
+
+<p>rake new_page[super-awesome]</p>
+
+<pre><code>rake watch
+rake preview
+</code></pre>
+
+<p>vim _config.yml</p>
+
+<p>rake generate</p>
+
+<p>rake deploy</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
       <h1 class="entry-title"><a href="/blog/2014/08/27/first/">First</a></h1>
     
     
@@ -107,6 +181,10 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/08/27/octopress-da-jian-guo-cheng/">Octopress 搭建过程</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/08/27/first/">First</a>
