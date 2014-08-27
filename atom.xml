@@ -4,7 +4,7 @@
   <title><![CDATA[My Blog qcbetter]]></title>
   <link href="http://wiminq.github.io/atom.xml" rel="self"/>
   <link href="http://wiminq.github.io/"/>
-  <updated>2014-08-27T10:44:37+08:00</updated>
+  <updated>2014-08-27T10:47:53+08:00</updated>
   <id>http://wiminq.github.io/</id>
   <author>
     <name><![CDATA[Qin Chenbo]]></name>
@@ -31,6 +31,9 @@
 <p>bundle install</p>
 
 <p>rake install</p>
+
+<!-- more -->
+
 
 <p>rake setup_github_pages</p>
 
