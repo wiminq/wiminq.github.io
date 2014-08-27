@@ -130,10 +130,10 @@ MariaDB的实现基于GTID,
 
 <p>网易之后:InnoSQL</p>
 
-<blockquote><p>但是5.5没有GTID,他们增加了一个event类型,称之为Gcid_event,表示组提交的编号
-    一个binlog_commit_wait_user参数表示等待多久再组提交,这样的参数对共享存储有极大帮助,根据测试结果,响应时间下降3%,但是共享存储的IO使用率下降50%</p></blockquote>
+<pre><code>但是5.5没有GTID,他们增加了一个event类型,称之为Gcid_event,表示组提交的编号
+一个binlog_commit_wait_user参数表示等待多久再组提交,这样的参数对共享存储有极大帮助,根据测试结果,响应时间下降3%,但是共享存储的IO使用率下降50%
 
-<pre><code>还有一个重要特性:crash safe:服务器或者复制服务出现任何问题,主从数据是完全正确的,他们将relay-log作为一张表,这个和5.6官方处理方式是一样的,但是和percona不一样,
+还有一个重要特性:crash safe:服务器或者复制服务出现任何问题,主从数据是完全正确的,他们将relay-log作为一张表,这个和5.6官方处理方式是一样的,但是和percona不一样,
 </code></pre>
 
 <p>percona方案:</p>
