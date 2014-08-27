@@ -4,7 +4,7 @@
   <title><![CDATA[My Blog qcbetter]]></title>
   <link href="http://wiminq.github.io/atom.xml" rel="self"/>
   <link href="http://wiminq.github.io/"/>
-  <updated>2014-08-27T10:47:53+08:00</updated>
+  <updated>2014-08-27T14:25:44+08:00</updated>
   <id>http://wiminq.github.io/</id>
   <author>
     <name><![CDATA[Qin Chenbo]]></name>
@@ -12,6 +12,117 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[MySQL并行复制]]></title>
+    <link href="http://wiminq.github.io/blog/2014/08/27/mysqlbing-xing-fu-zhi/"/>
+    <updated>2014-08-27T14:24:44+08:00</updated>
+    <id>http://wiminq.github.io/blog/2014/08/27/mysqlbing-xing-fu-zhi</id>
+    <content type="html"><![CDATA[<ul>
+<li>MySQL复制中容易遇到的问题</li>
+<li>各家的解决方案</li>
+<li>比较完美的并行复制的配置</li>
+</ul>
+
+
+<hr />
+
+<p>MySQL slave 的延迟问题普遍</p>
+
+<p>由于这个原因,很难将读取操作放到从机,造成了以下潜规则</p>
+
+<pre><code>实时性要求不高的读取操作可以放到slave,实时性高的还得放到master
+从机仅能做前一天的统计查询(夸张了)
+</code></pre>
+
+<p>网易之前</p>
+
+<pre><code>之前易信 RDS也遇到这些问题,
+V3版本之前解决方案是 使用batch commit,即批量提交,由于减少commit次数也有效,
+    重点是对二进制格式没有要求,
+    缺点是还是单线程回放,不能充分利用磁盘性能,存储引擎需要是innodb或者tukudb
+</code></pre>
+
+<p>淘宝:</p>
+
+<pre><code>并行复制是基于row格式(后来我个人和阿里聊说他们这种方案也是不采用,有更好的,类似与一个中间件 binlog解析后做处理)
+@姜承尧:对并行的判断会比较复杂,并且全局hash表感觉会是一个瓶颈
+</code></pre>
+
+<p>MariaDB</p>
+
+<pre><code>一个组提交中的事物可以并行执行.(堪称完美)
+一个组提交中的事物之间没有冲突,否则不可能进行这个阶段.
+MariaDB的实现基于GTID,
+</code></pre>
+
+<p>网易之后:InnoSQL</p>
+
+<pre><code>但是5.5没有GTID,他们增加了一个event类型,称之为Gcid_event,表示组提交的编号
+一个binlog_commit_wait_user参数表示等待多久再组提交,这样的参数对共享存储有极大帮助,根据测试结果,响应时间下降3%,但是共享存储的IO使用率下降50%
+
+还有一个重要特性:crash safe:服务器或者复制服务出现任何问题,主从数据是完全正确的,他们将relay-log作为一张表,这个和5.6官方处理方式是一样的,但是和percona不一样,
+</code></pre>
+
+<p>percona方案:</p>
+
+<pre><code>将slave服务器的二进制位置写入innodb的事物段头,回复时通过这一段来替换relay-info文件,这样看似简单易懂,但是只支持innodb存储引擎.
+</code></pre>
+
+<p><strong>实现并行复制最为关键</strong>是order commit的实现,即事物在slave服务器是并行执行的,但是提交顺序和master服务器一致的.这样能保证主从产生二进制日志的顺序是一致的. <code>实现最复杂的是对出错的处理</code>(具体没说)</p>
+
+<h3>并行复制配置</h3>
+
+<p>一个完美crash-safe并行复制的环境</p>
+
+<p>master:</p>
+
+<pre><code>[mysqld]
+server-id=xxx
+log-bin=xxx
+sync_binlog=1 #保证master crash safe，该参数必须设置为1
+innodb_support_xa=1 #保证master crash safe，该参数必须设置为1
+binlog_commit_wait_count=xxx #根据自身业务进行调整
+binlog_commit_wait_usec=xxx #根据自身业务进行调整
+enable_table_relay_info=1 #如果需要进行双主的配置
+</code></pre>
+
+<p>slave:</p>
+
+<pre><code>[mysqld]
+server-id = xxx
+log-bin = xxx
+enable_table_relay_info = 1
+enable_muti_replication = 1 #启用并行复制
+slave_parallel_threads = 32 #并行复制的线程数
+relay_log_recovery = 1 #从机crash safe要求重新同步master日志
+</code></pre>
+
+<p>这样能保证并行复制crash safe 但是不保证failover不丢数据</p>
+
+<p>(<code>sync-binlog=1 supprot_xa=1了不就本来就是crash-safe的么?</code>这个不是很清楚,还是这个功能是有些夸大了?)</p>
+
+<p>不丢失需要开启InnoSQL的VSR功能(参考下一篇文章)</p>
+
+<hr />
+
+<p>参考链接:</p>
+
+<p><a href="http://www.innomysql.net/article/6276.html">http://www.innomysql.net/article/6276.html</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[NOSQL数据模型(HBase Cassandra)]]></title>
+    <link href="http://wiminq.github.io/blog/2014/08/27/nosqlshu-ju-mo-xing-hbase-cassandra/"/>
+    <updated>2014-08-27T11:39:15+08:00</updated>
+    <id>http://wiminq.github.io/blog/2014/08/27/nosqlshu-ju-mo-xing-hbase-cassandra</id>
+    <content type="html"><![CDATA[<p>昨天看了</p>
+
+<!-- more -->
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Octopress 搭建过程]]></title>
