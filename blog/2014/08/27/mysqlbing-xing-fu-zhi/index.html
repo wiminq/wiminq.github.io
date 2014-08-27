@@ -172,7 +172,7 @@ relay_log_recovery = 1 #从机crash safe要求重新同步master日志
 
 <p>这样能保证并行复制crash safe 但是不保证failover不丢数据</p>
 
-<p>(<code>sync-binlog=1 supprot_xa=1了不就本来就是crash-safe的么?</code>这个不是很清楚,还是这个功能是有些夸大了?)</p>
+<p>(<code>sync-binlog=1 supprot_xa=1了不就本来就是crash-safe的么?</code>这个不是很清楚,还是这个功能是有些夸大了?) 哦 他这个safe 是指relay log的safe啊..</p>
 
 <p>不丢失需要开启InnoSQL的VSR功能(参考下一篇文章)</p>
 
