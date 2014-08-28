@@ -5,11 +5,13 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Octopress 搭建过程 - My Blog qcbetter</title>
+  <title>SQL优化之limit分页优化 - My Blog qcbetter</title>
   <meta name="author" content="Qin Chenbo">
 
   
-  <meta name="description" content="Octopress 搭建过程 git clone git://github.com/imathis/octopress.git octopress cd octopress gem install bundler rbenv rehash bundle install rake install &hellip;">
+  <meta name="description" content="SQL优化之limit分页优化 分页优化 例一 select * from t where sellerid=100 limit 100000，20
+优化写法(还有别的写法)
+select t1.* from t t1,(select id from t sellerid=100 limit &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +20,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://wiminq.github.io/blog/2014/08/27/octopress-da-jian-guo-cheng">
+  <link rel="canonical" href="http://wiminq.github.io/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="My Blog qcbetter" type="application/atom+xml">
@@ -68,7 +70,7 @@
   
   <header>
     
-      <h1 class="entry-title">Octopress 搭建过程</h1>
+      <h1 class="entry-title">SQL优化之limit分页优化</h1>
     
     
       <p class="meta">
@@ -77,63 +79,53 @@
 
 
 
-<time class='entry-date' datetime='2014-08-27T10:43:57+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:43 am</span></time>
+<time class='entry-date' datetime='2014-08-28T11:13:21+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:13 am</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><h1>Octopress 搭建过程</h1>
+<div class="entry-content"><p>SQL优化之limit分页优化</p>
 
-<p>git clone git://github.com/imathis/octopress.git octopress</p>
+<h4>分页优化</h4>
 
-<p>cd octopress</p>
+<p>例一</p>
 
-<p>gem install bundler</p>
-
-<p>rbenv rehash</p>
-
-<p>bundle install</p>
-
-<p>rake install</p>
+<pre><code>select  *  from t where sellerid=100 limit 100000，20
+优化写法(还有别的写法)
+select t1.* from  t t1,(select id from t  sellerid=100 limit 100000，20) t2 where t1.id=t2.id;
+优化后的翻页写法，先查询翻页中需要的N条数据的主键id，在根据主键id回表查询所需要的N条数据，此过程中查询N条数据的主键ID在索引中完成
+注意：需要在t表的sellerid字段上创建索引
+</code></pre>
 
 <!-- more -->
 
 
-<p>rake setup_github_pages</p>
+<p>例二</p>
 
-<pre><code>git@github.com:wiminq/wiminq.github.io.git
+<pre><code>select id, ... from t_buyer 
+where sellerId = 765922982 and gmt_modified &gt;= '1970-01-01 08:00:00' 
+and gmt_modified &lt;= '2013-06-05 17:11:31'   
+limit 255000, 5000
+
+改为:
+select t2.* from 
+(select id from t_buyer where sellerId = 765922982   
+and gmt_modified &gt;= '1970-01-01 08:00:00'   
+and gmt_modified &lt;= '2013-06-05 17:11:31'  
+limit 255000, 5000）t1,t_buyer t2 where t1.id=t2.id
 </code></pre>
 
-<p>rake generate</p>
+<hr />
 
-<p>rake deploy</p>
+<p><del><code>limit分页优化 待补充</code></del></p>
 
-<p>git add .
-git commit -m &lsquo;test&rsquo;
-git push origin source</p>
-
-<p>echo &lsquo;www.qcbetter.com&rsquo; >> source/CNAME</p>
-
-<p>alias rake=&lsquo;noglob rake&rsquo;</p>
-
-<p>rake new_post[&ldquo;first &rdquo;]</p>
-
-<pre><code>vim source/_posts/2014-08-27-test.markdown
+<pre><code>limit 1000,10 
+    where id &gt;=1000 order by id limit 10;
+select id,title,create_date from x order by create_date asc limit 1000,10;
+select a.id,a.title,a.create_date from x order by create_date asc limit (1000,1) b on a.id&gt;= b.id limit 10;
 </code></pre>
-
-<p>rake new_page[super-awesome]</p>
-
-<pre><code>rake watch
-rake preview
-</code></pre>
-
-<p>vim _config.yml</p>
-
-<p>rake generate</p>
-
-<p>rake deploy</p>
 </div>
 
 
@@ -149,7 +141,7 @@ rake preview
 
 
 
-<time class='entry-date' datetime='2014-08-27T10:43:57+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:43 am</span></time>
+<time class='entry-date' datetime='2014-08-28T11:13:21+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:13 am</span></time>
       
 
 
@@ -164,10 +156,8 @@ rake preview
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2014/08/27/first/" title="Previous Post: first">&laquo; first</a>
+        <a class="basic-alignment left" href="/blog/2014/08/28/sqlyou-hua-zhi-zi-cha-xun-you-hua/" title="Previous Post: SQL优化之子查询优化">&laquo; SQL优化之子查询优化</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2014/08/27/nosqlshu-ju-mo-xing-hbase-cassandra/" title="Next Post: NOSQL数据模型(HBase cassandra)">NOSQL数据模型(HBase cassandra) &raquo;</a>
       
     </p>
   </footer>

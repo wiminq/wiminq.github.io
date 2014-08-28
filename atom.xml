@@ -4,7 +4,7 @@
   <title><![CDATA[My Blog qcbetter]]></title>
   <link href="http://wiminq.github.io/atom.xml" rel="self"/>
   <link href="http://wiminq.github.io/"/>
-  <updated>2014-08-28T11:09:46+08:00</updated>
+  <updated>2014-08-28T11:15:49+08:00</updated>
   <id>http://wiminq.github.io/</id>
   <author>
     <name><![CDATA[Qin Chenbo]]></name>
@@ -12,6 +12,108 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[SQL优化之limit分页优化]]></title>
+    <link href="http://wiminq.github.io/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua/"/>
+    <updated>2014-08-28T11:13:21+08:00</updated>
+    <id>http://wiminq.github.io/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua</id>
+    <content type="html"><![CDATA[<p>SQL优化之limit分页优化</p>
+
+<h4>分页优化</h4>
+
+<p>例一</p>
+
+<pre><code>select  *  from t where sellerid=100 limit 100000，20
+优化写法(还有别的写法)
+select t1.* from  t t1,(select id from t  sellerid=100 limit 100000，20) t2 where t1.id=t2.id;
+优化后的翻页写法，先查询翻页中需要的N条数据的主键id，在根据主键id回表查询所需要的N条数据，此过程中查询N条数据的主键ID在索引中完成
+注意：需要在t表的sellerid字段上创建索引
+</code></pre>
+
+<!-- more -->
+
+
+<p>例二</p>
+
+<pre><code>select id, ... from t_buyer 
+where sellerId = 765922982 and gmt_modified &gt;= '1970-01-01 08:00:00' 
+and gmt_modified &lt;= '2013-06-05 17:11:31'   
+limit 255000, 5000
+
+改为:
+select t2.* from 
+(select id from t_buyer where sellerId = 765922982   
+and gmt_modified &gt;= '1970-01-01 08:00:00'   
+and gmt_modified &lt;= '2013-06-05 17:11:31'  
+limit 255000, 5000）t1,t_buyer t2 where t1.id=t2.id
+</code></pre>
+
+<hr />
+
+<p><del><code>limit分页优化 待补充</code></del></p>
+
+<pre><code>limit 1000,10 
+    where id &gt;=1000 order by id limit 10;
+select id,title,create_date from x order by create_date asc limit 1000,10;
+select a.id,a.title,a.create_date from x order by create_date asc limit (1000,1) b on a.id&gt;= b.id limit 10;
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQL优化之子查询优化]]></title>
+    <link href="http://wiminq.github.io/blog/2014/08/28/sqlyou-hua-zhi-zi-cha-xun-you-hua/"/>
+    <updated>2014-08-28T11:11:18+08:00</updated>
+    <id>http://wiminq.github.io/blog/2014/08/28/sqlyou-hua-zhi-zi-cha-xun-you-hua</id>
+    <content type="html"><![CDATA[<p><code>mysql的处理逻辑是遍历test_pic表中的每一条记录，代入到子查询中中去
+而不是先将子查询中的结果集计算出来，然后在与test_pic表关联</code></p>
+
+<p>最佳实践：
+子查询在mysql的常见的5.0，5.1，5.5版本中都存在较大风险，使用不当则会造
+成严重的性能问题，建议将子查询改为关联的形式：</p>
+
+<!-- more -->
+
+
+<p>SQL优化之子查询优化</p>
+
+<p><code>5.6之前的子查询</code></p>
+
+<pre><code>select * from A where filed in (select field from B where id = 'xxx');
+可以内层临时表,再查再撤销
+select  a.* from A a join (select field from B where id = 'xxx') on a.filed = b.filed
+</code></pre>
+
+<hr />
+
+<p>例一</p>
+
+<pre><code>select count(*) from test_pic as bi where bi.time in 
+(select MAX(time) from test_pic where PIC_TYPE=1 GROUP BY BUILDING_ID) 
+GROUP BY bi.BUILDING_ID;
+</code></pre>
+
+<p><code>mysql的处理逻辑是遍历test_pic表中的每一条记录，代入到子查询中中去
+而不是先将子查询中的结果集计算出来，然后在与test_pic表关联</code></p>
+
+<p>改写为：</p>
+
+<pre><code>select count(*) from test_pic as bi , 
+(select MAX(time) as time from test_pic 
+where PIC_TYPE=1 GROUP BY BUILDING_ID) b 
+where bi.time = b.time GROUP BY bi.BUILDING_ID;
+</code></pre>
+
+<p>最佳实践：
+子查询在mysql的常见的5.0，5.1，5.5版本中都存在较大风险，使用不当则会造
+成严重的性能问题，建议将子查询改为关联的形式：
+在oracle迁移到mysql的时候，使用Mysql 5.6的版本，可以避免麻烦的子查询改写</p>
+
+<p>参考资料:
+RDS博客</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[一些数据库问题优化思路]]></title>

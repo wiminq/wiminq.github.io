@@ -9,13 +9,9 @@
   <meta name="author" content="Qin Chenbo">
 
   
-  <meta name="description" content="一些数据库问题优化思路(所有的都是一样,先定位问题 再针对性优化) (比较水的一篇,具体详细的优化措施别的文章里有) 定位瓶颈: 是哪里有问题 CPU;
-IO;
-连接数;
-DISK(空间问题) 设计优化: 水平拆分:业务拆分 拆库
-cache+静态文件CDN
-读写分离
-数据库设计:索引设计; &hellip;">
+  <meta name="description" content="SQL优化之limit分页优化 分页优化 例一 select * from t where sellerid=100 limit 100000，20
+优化写法(还有别的写法)
+select t1.* from t t1,(select id from t sellerid=100 limit &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -71,6 +67,90 @@ cache+静态文件CDN
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua/">SQL优化之limit分页优化</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-08-28T11:13:21+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:13 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>SQL优化之limit分页优化</p>
+
+<h4>分页优化</h4>
+
+<p>例一</p>
+
+<pre><code>select  *  from t where sellerid=100 limit 100000，20
+优化写法(还有别的写法)
+select t1.* from  t t1,(select id from t  sellerid=100 limit 100000，20) t2 where t1.id=t2.id;
+优化后的翻页写法，先查询翻页中需要的N条数据的主键id，在根据主键id回表查询所需要的N条数据，此过程中查询N条数据的主键ID在索引中完成
+注意：需要在t表的sellerid字段上创建索引
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/28/sqlyou-hua-zhi-zi-cha-xun-you-hua/">SQL优化之子查询优化</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-08-28T11:11:18+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:11 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><code>mysql的处理逻辑是遍历test_pic表中的每一条记录，代入到子查询中中去
+而不是先将子查询中的结果集计算出来，然后在与test_pic表关联</code></p>
+
+<p>最佳实践：
+子查询在mysql的常见的5.0，5.1，5.5版本中都存在较大风险，使用不当则会造
+成严重的性能问题，建议将子查询改为关联的形式：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/08/28/sqlyou-hua-zhi-zi-cha-xun-you-hua/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -382,6 +462,14 @@ cache+静态文件CDN
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua/">SQL优化之limit分页优化</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/08/28/sqlyou-hua-zhi-zi-cha-xun-you-hua/">SQL优化之子查询优化</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/08/28/%5B%3F%5D-xie-shu-ju-ku-wen-ti-you-hua-si-lu/">一些数据库问题优化思路</a>
       </li>
     
@@ -391,14 +479,6 @@ cache+静态文件CDN
     
       <li class="post">
         <a href="/blog/2014/08/27/mysql-replicationzhong-de-%5B%3F%5D-xie-shu-ju-diu-shi-wen-ti/">MySQL Replication中的一些数据丢失问题</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/08/27/mysqlbing-xing-fu-zhi/">MySQL并行复制</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/08/27/nosqlshu-ju-mo-xing-hbase-cassandra/">NOSQL数据模型(HBase Cassandra)</a>
       </li>
     
   </ul>
