@@ -4,7 +4,7 @@
   <title><![CDATA[My Blog qcbetter]]></title>
   <link href="http://wiminq.github.io/atom.xml" rel="self"/>
   <link href="http://wiminq.github.io/"/>
-  <updated>2014-08-27T16:24:36+08:00</updated>
+  <updated>2014-08-28T11:09:46+08:00</updated>
   <id>http://wiminq.github.io/</id>
   <author>
     <name><![CDATA[Qin Chenbo]]></name>
@@ -12,6 +12,182 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[一些数据库问题优化思路]]></title>
+    <link href="http://wiminq.github.io/blog/2014/08/28/%5B%3F%5D-xie-shu-ju-ku-wen-ti-you-hua-si-lu/"/>
+    <updated>2014-08-28T11:08:12+08:00</updated>
+    <id>http://wiminq.github.io/blog/2014/08/28/[?]-xie-shu-ju-ku-wen-ti-you-hua-si-lu</id>
+    <content type="html"><![CDATA[<p>一些数据库问题优化思路(所有的都是一样,先定位问题 再针对性优化)</p>
+
+<p>(比较水的一篇,具体详细的优化措施别的文章里有)</p>
+
+<p>定位瓶颈:</p>
+
+<p>是哪里有问题</p>
+
+<ul>
+<li>CPU;</li>
+<li>IO;</li>
+<li>连接数;</li>
+<li>DISK(空间问题)</li>
+</ul>
+
+
+<p>设计优化:</p>
+
+<ul>
+<li>水平拆分:业务拆分 拆库</li>
+<li>cache+静态文件CDN</li>
+<li>读写分离</li>
+<li>数据库设计:索引设计;主键设计;引擎;字段设计</li>
+</ul>
+
+
+<p>SQL优化:</p>
+
+<ul>
+<li>分页;</li>
+<li>排序;</li>
+<li>索引;</li>
+<li>子查询</li>
+</ul>
+
+
+<!-- more -->
+
+
+<p>设计优化:</p>
+
+<pre><code>自增ID主键:考虑到插入性能;二级索引空间;隐藏主键的问题
+</code></pre>
+
+<p>索引设计:</p>
+
+<pre><code>索引设计基于query:
+    application sql
+    slow log
+    不仅仅是select需要索引,update.delete也需要添加
+要点:
+select a from table where b=1 and c=2 order by d desc;
+    A 评估参与运算的结果集范围
+        b,c
+    B 参与排序的字段
+        b,c,d
+    C 覆盖索引
+        b,c,d,a
+误区:
+    对查询条件的每个字段建单列索引
+    对查询的所有字段建组合索引
+</code></pre>
+
+<h3>SQL优化</h3>
+
+<p>一 分页优化(详细见博客另一篇文章)</p>
+
+<p>二 隐式转换导致的索引失效</p>
+
+<p>三 子查询问题(详细见另一篇文章)</p>
+
+<h4>分页优化</h4>
+
+<p>例一</p>
+
+<pre><code>select  *  from t where sellerid=100 limit 100000，20
+优化写法(还有别的写法)
+select t1.* from  t t1,(select id from t  sellerid=100 limit 100000，20) t2 where t1.id=t2.id;
+优化后的翻页写法，先查询翻页中需要的N条数据的主键id，在根据主键id回表查询所需要的N条数据，此过程中查询N条数据的主键ID在索引中完成
+注意：需要在t表的sellerid字段上创建索引
+</code></pre>
+
+<p>例二</p>
+
+<pre><code>select id, ... from t_buyer 
+where sellerId = 765922982 and gmt_modified &gt;= '1970-01-01 08:00:00' 
+and gmt_modified &lt;= '2013-06-05 17:11:31'   
+limit 255000, 5000
+
+改为:
+select t2.* from 
+(select id from t_buyer where sellerId = 765922982   
+and gmt_modified &gt;= '1970-01-01 08:00:00'   
+and gmt_modified &lt;= '2013-06-05 17:11:31'  
+limit 255000, 5000）t1,t_buyer t2 where t1.id=t2.id
+</code></pre>
+
+<h4>子查询优化</h4>
+
+<p><code>5.6之前的子查询</code></p>
+
+<pre><code>select * from A where filed in (select field from B where id = 'xxx');
+可以内层临时表,再查再撤销
+select  a.* from A a join (select field from B where id = 'xxx') on a.filed = b.filed
+</code></pre>
+
+<hr />
+
+<p>例一</p>
+
+<pre><code>select count(*) from test_pic as bi where bi.time in 
+(select MAX(time) from test_pic where PIC_TYPE=1 GROUP BY BUILDING_ID) 
+GROUP BY bi.BUILDING_ID;
+</code></pre>
+
+<p><code>mysql的处理逻辑是遍历test_pic表中的每一条记录，代入到子查询中中去
+而不是先将子查询中的结果集计算出来，然后在与test_pic表关联</code></p>
+
+<p>改写为：</p>
+
+<pre><code>select count(*) from test_pic as bi , 
+(select MAX(time) as time from test_pic 
+where PIC_TYPE=1 GROUP BY BUILDING_ID) b 
+where bi.time = b.time GROUP BY bi.BUILDING_ID;
+</code></pre>
+
+<p>最佳实践：
+子查询在mysql的常见的5.0，5.1，5.5版本中都存在较大风险，使用不当则会造
+成严重的性能问题，建议将子查询改为关联的形式：
+在oracle迁移到mysql的时候，使用Mysql 5.6的版本，可以避免麻烦的子查询改写</p>
+
+<p>参考资料:
+RDS博客</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[InnoDB O_DIRECT选项]]></title>
+    <link href="http://wiminq.github.io/blog/2014/08/27/innodb-o-directxuan-xiang/"/>
+    <updated>2014-08-27T20:06:50+08:00</updated>
+    <id>http://wiminq.github.io/blog/2014/08/27/innodb-o-directxuan-xiang</id>
+    <content type="html"><![CDATA[<p><code>innodb_flush_method</code>通常设置为<code>O_DIRECT</code></p>
+
+<p>官方文档推荐,一般说就是启用后文件的写入将绕过操作系统缓存,直接写文件.这样虽然不会有更好的性能但是DB有自己的缓存不需要了.</p>
+
+<p>但是不管innodb_flush_method的设置为何值，在刷新脏页时都会调用<code>fsync</code>操作，具体见函数buf_flush_buffered_writes.</p>
+
+<p>但是为什么已经打开了O_DIRECT标识为什么还要fsync确保文件写入呢?</p>
+
+<!-- more -->
+
+
+<hr />
+
+<p>因为有些文件系统例如XFS EXT4有inode与之对应,其保存有两部分,元数据和文件的存储数据.</p>
+
+<p>元数据包含的内容有:</p>
+
+<ul>
+<li>文件大小</li>
+<li>权限</li>
+<li>链接数量</li>
+</ul>
+
+
+<p>可以发现元数据及其重要的，不仅仅是文件最后修改时间、权限等信息，它还包含有指向存储块的信息。若在数据增长时，元数据没有及时更新，那么同样可能会导致数据丢失的情况。</p>
+
+<p>inode中的元数据是保存在inode cache中，inode的保存文件的数据是保存在操作系统缓存中（若未开启O_DIRECT标识）</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[MySQL Replication中的一些数据丢失问题]]></title>

@@ -9,12 +9,13 @@
   <meta name="author" content="Qin Chenbo">
 
   
-  <meta name="description" content="
-复制中可能遇到的问题
-5.5的解决方案
-5.7的解决方案
-VSR(InnoSQL)实现原理和机制(一句话就是调整了semi-sync的提交与等待顺序)
-HA suit和一些条件是什么 ">
+  <meta name="description" content="一些数据库问题优化思路(所有的都是一样,先定位问题 再针对性优化) (比较水的一篇,具体详细的优化措施别的文章里有) 定位瓶颈: 是哪里有问题 CPU;
+IO;
+连接数;
+DISK(空间问题) 设计优化: 水平拆分:业务拆分 拆库
+cache+静态文件CDN
+读写分离
+数据库设计:索引设计; &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -70,6 +71,114 @@ HA suit和一些条件是什么 ">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/28/%5B%3F%5D-xie-shu-ju-ku-wen-ti-you-hua-si-lu/">一些数据库问题优化思路</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-08-28T11:08:12+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:08 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>一些数据库问题优化思路(所有的都是一样,先定位问题 再针对性优化)</p>
+
+<p>(比较水的一篇,具体详细的优化措施别的文章里有)</p>
+
+<p>定位瓶颈:</p>
+
+<p>是哪里有问题</p>
+
+<ul>
+<li>CPU;</li>
+<li>IO;</li>
+<li>连接数;</li>
+<li>DISK(空间问题)</li>
+</ul>
+
+
+<p>设计优化:</p>
+
+<ul>
+<li>水平拆分:业务拆分 拆库</li>
+<li>cache+静态文件CDN</li>
+<li>读写分离</li>
+<li>数据库设计:索引设计;主键设计;引擎;字段设计</li>
+</ul>
+
+
+<p>SQL优化:</p>
+
+<ul>
+<li>分页;</li>
+<li>排序;</li>
+<li>索引;</li>
+<li>子查询</li>
+</ul>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/08/28/%5B%3F%5D-xie-shu-ju-ku-wen-ti-you-hua-si-lu/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/27/innodb-o-directxuan-xiang/">InnoDB O_DIRECT选项</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-08-27T20:06:50+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>8:06 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><code>innodb_flush_method</code>通常设置为<code>O_DIRECT</code></p>
+
+<p>官方文档推荐,一般说就是启用后文件的写入将绕过操作系统缓存,直接写文件.这样虽然不会有更好的性能但是DB有自己的缓存不需要了.</p>
+
+<p>但是不管innodb_flush_method的设置为何值，在刷新脏页时都会调用<code>fsync</code>操作，具体见函数buf_flush_buffered_writes.</p>
+
+<p>但是为什么已经打开了O_DIRECT标识为什么还要fsync确保文件写入呢?</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/08/27/innodb-o-directxuan-xiang/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -273,6 +382,14 @@ HA suit和一些条件是什么 ">
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/08/28/%5B%3F%5D-xie-shu-ju-ku-wen-ti-you-hua-si-lu/">一些数据库问题优化思路</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/08/27/innodb-o-directxuan-xiang/">InnoDB O_DIRECT选项</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/08/27/mysql-replicationzhong-de-%5B%3F%5D-xie-shu-ju-diu-shi-wen-ti/">MySQL Replication中的一些数据丢失问题</a>
       </li>
     
@@ -282,14 +399,6 @@ HA suit和一些条件是什么 ">
     
       <li class="post">
         <a href="/blog/2014/08/27/nosqlshu-ju-mo-xing-hbase-cassandra/">NOSQL数据模型(HBase Cassandra)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/08/27/octopress-da-jian-guo-cheng/">Octopress 搭建过程</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/08/27/first/">First</a>
       </li>
     
   </ul>
