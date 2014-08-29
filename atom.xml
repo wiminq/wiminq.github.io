@@ -4,7 +4,7 @@
   <title><![CDATA[My Blog qcbetter]]></title>
   <link href="http://wiminq.github.io/atom.xml" rel="self"/>
   <link href="http://wiminq.github.io/"/>
-  <updated>2014-08-28T11:15:49+08:00</updated>
+  <updated>2014-08-29T23:57:13+08:00</updated>
   <id>http://wiminq.github.io/</id>
   <author>
     <name><![CDATA[Qin Chenbo]]></name>
@@ -12,6 +12,147 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[InnoDB的MVCC策略]]></title>
+    <link href="http://wiminq.github.io/blog/2014/08/29/innodbde-mvccce-lue/"/>
+    <updated>2014-08-29T23:55:27+08:00</updated>
+    <id>http://wiminq.github.io/blog/2014/08/29/innodbde-mvccce-lue</id>
+    <content type="html"><![CDATA[<p>MVCC</p>
+
+<pre><code>介绍
+实现
+    Oracle
+    InnoDB
+    PostgreSQL
+</code></pre>
+
+<hr />
+
+<p>MVCC优势:</p>
+
+<pre><code>高并发
+    读写不阻塞
+    不同数据库的可见性定义(?)
+低加锁开销
+    读不加锁
+    OLTP 读写4:1
+</code></pre>
+
+<p>MVCC实现:</p>
+
+<pre><code>基于时间戳:oracle
+基于事物ID:InnoDB postgre
+
+实现粒度:
+    页级:Oracle
+    行级:InnoDB Postgres
+</code></pre>
+
+<hr />
+
+<h3>InnoDB MVCC实现:</h3>
+
+<!-- more -->
+
+
+<p>关键字</p>
+
+<pre><code>基于事物ID
+行级多版本
+回滚段
+</code></pre>
+
+<p><code>事物ID</code></p>
+
+<pre><code>唯一标示一个事物
+递增:新事物对应更大的事物ID
+64位.8byte
+</code></pre>
+
+<h4>MVCC扩展结构:</h4>
+
+<p>聚簇索引</p>
+
+<pre><code>记录扩展(系统列)
+    DB_TRX_ID
+    ROLLBACK_PTR
+    Delete_Bit
+</code></pre>
+
+<p>二级索引</p>
+
+<pre><code>记录扩展
+    Delete_Bit      
+
+页面扩展
+    DB_MAX_ID(作用:index only scan)
+</code></pre>
+
+<h4>更新处理</h4>
+
+<p>Delete:</p>
+
+<pre><code>聚簇索引
+    设置Delete_Bit位,前项写入回滚段
+    前项包括系统列,#二级索引属性列#
+二级索引
+    设置Delete_Bit位
+</code></pre>
+
+<p>Update:</p>
+
+<pre><code>聚簇索引
+    原地更新,前项写入回滚段
+二级索引
+    clone&amp; update 原项设置Delete_Bit(#不物理删除#)
+</code></pre>
+
+<h4>可见性判断</h4>
+
+<p>原理- 给定事务Tx,所有在事务Tx开始时已经提交的事务做的更新是可见的(snapshot read)ReadView- 每个事务,都有read_view结构,通过此判断可见性- low_limit_id: 事务id >= 的所做的修改,均不可见 - up_limit_id: 事务id &lt; 的所做的修改,一定可见 - trx_ids: 事务开始时,活跃事务链表</p>
+
+<h4>Undo</h4>
+
+<p>事务Undo- insert_undo链表 • update_undo链表可见版本构造(记录级)- 1. read 最新版本,判断可见性- 2. 根据ROLLBACK_PTR回滚到前一版本
+- 3. 继续步骤1</p>
+
+<h4>Purge</h4>
+
+<p>功能</p>
+
+<ul>
+<li>回收聚簇/二级索引上的删除项方式</li>
+<li>定期唤醒purge线程- 遍历undo日志,构造索引记录,查找并删除- 一次回收20项undo pages :n_pages_handled = 20不足- 为了能够删除二级索引记录,undo中必须记录完整索引项思考- 为什么需要做purge?</li>
+</ul>
+
+
+<h3>总结:</h3>
+
+<p><code>优势</code></p>
+
+<ul>
+<li>实现简单(相对oracle)</li>
+<li>行级多版本, 不存在false violation</li>
+</ul>
+
+
+<p><code>缺点</code></p>
+
+<ul>
+<li>记录开销增加(系统列)</li>
+<li>记录不能实时物理删除(行标示)</li>
+<li>更新时,undo中需要记录二级索引的所有属性</li>
+<li>purge性能差:过期版本不能及时回收;undo日志不能被覆盖</li>
+<li>不支持闪回查询</li>
+</ul>
+
+
+<hr />
+
+<p>Thanks @何登成PPT</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[SQL优化之limit分页优化]]></title>

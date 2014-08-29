@@ -9,9 +9,10 @@
   <meta name="author" content="Qin Chenbo">
 
   
-  <meta name="description" content="SQL优化之limit分页优化 分页优化 例一 select * from t where sellerid=100 limit 100000，20
-优化写法(还有别的写法)
-select t1.* from t t1,(select id from t sellerid=100 limit &hellip;">
+  <meta name="description" content="MVCC 介绍
+实现 Oracle InnoDB PostgreSQL MVCC优势: 高并发 读写不阻塞 不同数据库的可见性定义(?)
+低加锁开销 读不加锁 OLTP 读写4:1 MVCC实现: 基于时间戳:oracle
+基于事物ID:InnoDB postgre 实现粒度: 页级:Oracle &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +68,73 @@ select t1.* from t t1,(select id from t sellerid=100 limit &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/29/innodbde-mvccce-lue/">InnoDB的MVCC策略</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-08-29T23:55:27+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:55 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>MVCC</p>
+
+<pre><code>介绍
+实现
+    Oracle
+    InnoDB
+    PostgreSQL
+</code></pre>
+
+<hr />
+
+<p>MVCC优势:</p>
+
+<pre><code>高并发
+    读写不阻塞
+    不同数据库的可见性定义(?)
+低加锁开销
+    读不加锁
+    OLTP 读写4:1
+</code></pre>
+
+<p>MVCC实现:</p>
+
+<pre><code>基于时间戳:oracle
+基于事物ID:InnoDB postgre
+
+实现粒度:
+    页级:Oracle
+    行级:InnoDB Postgres
+</code></pre>
+
+<hr />
+
+<h3>InnoDB MVCC实现:</h3>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/08/29/innodbde-mvccce-lue/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -462,6 +530,10 @@ select t1.* from  t t1,(select id from t  sellerid=100 limit 100000，20) t2 whe
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/08/29/innodbde-mvccce-lue/">InnoDB的MVCC策略</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua/">SQL优化之limit分页优化</a>
       </li>
     
@@ -475,10 +547,6 @@ select t1.* from  t t1,(select id from t  sellerid=100 limit 100000，20) t2 whe
     
       <li class="post">
         <a href="/blog/2014/08/27/innodb-o-directxuan-xiang/">InnoDB O_DIRECT选项</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/08/27/mysql-replicationzhong-de-%5B%3F%5D-xie-shu-ju-diu-shi-wen-ti/">MySQL Replication中的一些数据丢失问题</a>
       </li>
     
   </ul>
