@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>MySQL的一些性能问题和改进 - My Blog qcbetter</title>
+  <meta name="author" content="Qin Chenbo">
+
+  
+  <meta name="description" content="@ 楼方鑫 MySQL并发控制&amp;限流设计 一些性能问题和改进 以及一些他做的修改 性能: 褒贬不一: 业务需求不一样
+掌握力度不同
+flash设备与传统设备
+对开发人员的支持力度 测试 实际:读比写强 查询强: 简单的SQL(PK或者有效的索引查找) 要求:内存里完成排序,分组统计, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://wiminq.github.io/blog/2014/08/30/mysqlde-%5B%3F%5D-xie-xing-neng-wen-ti-he-gai-jin">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="My Blog qcbetter" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">My Blog qcbetter</a></h1>
+  
+    <h2>A blog for MySQL&linux.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:wiminq.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">MySQL的一些性能问题和改进</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-08-30T14:03:12+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:03 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>@ 楼方鑫 MySQL并发控制&amp;限流设计</p>
+
+<p>一些性能问题和改进</p>
+
+<p>以及一些他做的修改</p>
+
+<!-- more -->
+
+
+<hr />
+
+<p>性能:</p>
+
+<p>褒贬不一:</p>
+
+<pre><code>业务需求不一样
+掌握力度不同
+flash设备与传统设备
+对开发人员的支持力度
+
+测试
+</code></pre>
+
+<p>实际:读比写强</p>
+
+<pre><code>查询强:
+    简单的SQL(PK或者有效的索引查找)
+    要求:内存里完成排序,分组统计,无子查询
+更新弱:
+    写存储引擎日志
+    写MySQL binlog
+    server&amp;storage层的分布式事物
+</code></pre>
+
+<h4>一些问题:</h4>
+
+<ul>
+<li>全局锁太多</li>
+<li>并发是关键</li>
+<li>读写没分开</li>
+<li>优化器太弱</li>
+</ul>
+
+
+<p>全局锁太多</p>
+
+<pre><code>- SYS CPU太高
+    TRX_list
+    read View List
+    Lock List
+- Spinlock &amp; RW Lock &amp; Mutex
+- 临界区太大
+- 大锁 (事务表 buffer index commit)
+</code></pre>
+
+<p>并发是关键</p>
+
+<pre><code>降低并发减少SYS CPU
+合理的并发时程减少锁争用
+减少失误表长度 缩短事务表的临界区
+控制表的大小,缩短索引维护的临界区
+</code></pre>
+
+<p>读写要分开</p>
+
+<pre><code>调整优化应用的读写比例,MySQL无法分别控制,以及配合应用的读写比例
+</code></pre>
+
+<p>优化器弱:SQL写法</p>
+
+<pre><code>子查询 差
+join 差
+索引选择 不可靠
+</code></pre>
+
+<h4>改进:</h4>
+
+<ul>
+<li>多buffer pool(5.5)</li>
+<li>读写事物双队列(5.6)</li>
+<li>读事物优化&amp;索引全局锁(5.7)</li>
+</ul>
+
+
+<p>多Buffer Pool</p>
+
+<pre><code>代码重构 &amp; Plugin API重构
+MySQL 5.5的主要改进
+不能按指表定Buffer Pool,运气重要
+代码中到处可见的kernel_mutex
+读写互相影响很重要
+</code></pre>
+
+<p>读写事物双队列</p>
+
+<pre><code>MySQL 5.6在不见了kernel_mutex。
+最重要的是读写事务分了不同的队列。
+    ro_trx_list
+    rw_trx_list
+读写操作并发的情况明显改善。
+</code></pre>
+
+<p>读事物优化&amp;索引全局锁</p>
+
+<pre><code>查询不需要申请事物ID
+    自动识别只读操作
+    不再申请事物ID,减轻死锁检测的代价
+去掉索引全局锁
+    按索引range查询得到明显改善
+    索引增大时DML的速度明显改善
+</code></pre>
+
+<hr />
+
+<h3>并发控制:(这应该是他得特色)</h3>
+
+<p>4.1 操作分类
+4.2 读写分开
+4.3 事务分类
+4.4 查询分类
+4.5 控制机制
+4.6 效果测试</p>
+
+<p>4.1 操作分类</p>
+
+<pre><code>查询
+    复杂查询
+    简单查询
+更新
+    简单事务    
+    复杂事务
+</code></pre>
+
+<p>4.2 读写分开</p>
+
+<pre><code>限定总的并发数
+限定查询的并发数
+限定事务的并发数
+</code></pre>
+
+<p>4.3 事务分类</p>
+
+<pre><code>简单事务
+    Auto Commit模式
+    每个DML语句后自动Commit
+复杂事务
+    非Auto Commit模式
+    由多个DML构成一个语句
+</code></pre>
+
+<p>4.4 查询分类</p>
+
+<pre><code>简单查询
+    Auto Commit模式
+    根据PK或索引查找少量记录
+复杂查询
+    Auto Commit模式
+    包含子查询、分组统计、没有Where条件等
+事务查询
+    人为事务或非Auto Commit下的查询
+</code></pre>
+
+<p>4.5 控制机制
+    <img src="http://ww2.sinaimg.cn/mw1024/005KCLTgtw1ejumhvn5pdj30yi0luwhv.jpg" alt="image" /></p>
+
+<p>4.6 效果测试</p>
+
+<pre><code>效果很明显
+    10W QPS 7W TPS
+建一个有24个字段的表。
+按第二索引选择中间的两个字段，平均返回10条记录。
+并行度
+8，16，32，64，128，256，512，1024，2048，4096，8192，16384  
+</code></pre>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Qin Chenbo</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-08-30T14:03:12+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:03 pm</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/08/29/innodbde-mvccce-lue/" title="Previous Post: InnoDB的MVCC策略">&laquo; InnoDB的MVCC策略</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/08/30/mysqlde-%5B%3F%5D-xie-xing-neng-wen-ti-he-gai-jin/">MySQL的一些性能问题和改进</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/08/29/innodbde-mvccce-lue/">InnoDB的MVCC策略</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/08/28/sqlyou-hua-zhi-limitfen-ye-you-hua/">SQL优化之limit分页优化</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/08/28/sqlyou-hua-zhi-zi-cha-xun-you-hua/">SQL优化之子查询优化</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/08/28/%5B%3F%5D-xie-shu-ju-ku-wen-ti-you-hua-si-lu/">一些数据库问题优化思路</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Qin Chenbo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
