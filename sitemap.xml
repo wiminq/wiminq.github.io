@@ -3,6 +3,12 @@
   
   
   <url>
+    <loc>http://wiminq.github.io/blog/2014/09/23/qian-mo-lu-you-qi/</loc>
+    <lastmod>2014-09-23T23:35:05+08:00</lastmod>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://wiminq.github.io/blog/2014/08/30/mysqlde-%5B%3F%5D-xie-xing-neng-wen-ti-he-gai-jin/</loc>
     <lastmod>2014-08-30T14:03:12+08:00</lastmod>
     <priority>0.8</priority>
@@ -71,21 +77,21 @@
   
   <url>
     <loc>http://wiminq.github.io/blog/archives/</loc>
-    <lastmod>2014-09-05T10:23:05+08:00</lastmod>
+    <lastmod>2014-09-23T23:38:39+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://wiminq.github.io/</loc>
-    <lastmod>2014-09-05T10:23:05+08:00</lastmod>
+    <lastmod>2014-09-23T23:38:39+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   
   <url>
     <loc>http://wiminq.github.io/super-awesome/</loc>
-    <lastmod>2014-09-05T10:23:05+08:00</lastmod>
+    <lastmod>2014-09-23T23:38:39+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
